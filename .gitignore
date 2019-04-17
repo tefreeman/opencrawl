@@ -3,4 +3,6 @@ test/
 *.7z
 .mypy_cache/
 .vscode/
+.idea/
 error/
+venv/
