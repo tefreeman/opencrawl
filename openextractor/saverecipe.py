@@ -20,6 +20,7 @@ class SaveRecipes:
             raise Exception('The given db name does not exist')
 
         self.update_count: int = 0
+        self.error_count: float = 0
         self.recipe_buffer: List = list()
         self.event: threading.Event = threading.Event()
         self.lock: threading.Lock = threading.Lock()
@@ -58,7 +59,9 @@ class SaveRecipes:
             #    time.sleep(1)
             if self.stopped:
                 return
-            stdout.write(" \r count: %d | progress: %d%%" % (self.update_count, self.update_count / self.url_count))
+
+            stdout.write(" \r count: %d | progress: %d%% | error rate: %d%%"
+                         % (self.update_count, self.update_count / self.url_count, self.error_count / float(self.update_count + 0.0001)))
             stdout.flush()
             time.sleep(1)
 
@@ -68,6 +71,10 @@ class SaveRecipes:
             self.lock.acquire()
             self.update_count += 1
             self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
+            self.lock.release()
+        else:
+            self.lock.acquire()
+            self.error_count += 1
             self.lock.release()
 
     def alive(self):
