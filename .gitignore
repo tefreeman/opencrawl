@@ -1,0 +1,6 @@
+cache/
+test/
+*.7z
+.mypy_cache/
+.vscode/
+error/
