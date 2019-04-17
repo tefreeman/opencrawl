@@ -26,7 +26,7 @@ class Recipe:
             self.info: dict = {}
             self.url: str = ""
             self.errs: List[str] = []
-            self.error_status = ""
+            self.error_status: int
             self.parser = ""
             self.nutrition_info = {}
 
@@ -71,7 +71,7 @@ class Recipe:
         self.parser = parser
 
     def set_error_status(self, error_status):
-        self.error_status = error_status
+        self.error_status = int(error_status)
 
     def set_nutrition_info(self, nutrition_info):
         self.nutrition_info = nutrition_info

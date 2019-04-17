@@ -6,10 +6,9 @@ from typing import List, Union
 import re
 
 
-def crawl_food_network(threads: int, bulk_insert_amt: int):
-    food_network = OpenExtractor('https://www.foodnetwork.com/recipes/*', 'foodnetwork', bulk_insert_amt,
-                                 extract, check, url_check, url_remove)
-    food_network.run_crawl(threads)
+def crawl_food_network(bulk_insert_amt: int) -> OpenExtractor:
+    return OpenExtractor('https://www.foodnetwork.com/recipes/*', 'foodnetwork', bulk_insert_amt,
+                         extract, check, url_check, url_remove)
 
 
 def extract(parser: BeautifulSoup, recipe: Recipe) -> None:

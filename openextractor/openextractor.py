@@ -19,9 +19,10 @@ import  time
 
 class ParseStatus(IntEnum):
     SUCCESS = 0
-    NO_DATA = -1
-    INVALID_PAGE = -2
-    PARSING_ERRORS = -3
+    NO_DATA = 1
+    INVALID_PAGE = 2
+    PARSING_ERRORS = 3
+
 
 class OpenExtractor:
     common_crawl_indexes_url = 'https://index.commoncrawl.org/collinfo.json'
@@ -39,8 +40,8 @@ class OpenExtractor:
         self.load_url_map('recipes', collection_name)
         self.indexes: List[str] = self.get_open_crawl_index_list()
         self.record_list = self.find_urls_in_indexes(target_url, self.indexes)
-        self.save_thread = SaveRecipes('recipes', collection_name, bulk_trigger_amt, len(self.record_list)).start()
-        self.max_retries = 3
+        self.save_thread = SaveRecipes('recipes', collection_name, bulk_trigger_amt).start()
+        self.max_retries = 6
         self.max_thread_fail = 3
 
         self.connection_stats = {'parse_count': 0.001, 'parse_time': 0.001}
@@ -59,7 +60,7 @@ class OpenExtractor:
         for doc in cursor:
             self.parsed_urls[doc['url']] = True
 
-    def start_worker(self,):
+    def start_worker(self):
         tries = 0
         while True:
             try:
@@ -77,21 +78,26 @@ class OpenExtractor:
                     print('\n\nthread has failed ', tries, ' in a row terminating thread\n')
                     return
 
-
-
-    def run_crawl(self, threadCount):
-        for i in range(threadCount):
+    def run_crawl(self, start=0, end=-1):
+        if start < 0 or end > len(self.record_list) or start > len(self.record_list):
+            raise Exception("start and end is not valid")
+        for i in range(1):
             t = threading.Thread(target=self.start_worker)
             t.start()
             self.threads.append(t)
 
-        for key, prop in self.record_list.items():
-            self.matching_url_queue.put(prop)
+        if end == -1:
+            end = len(self.record_list)
+
+        self.save_thread.set_url_count(end-start)
+
+        for i in range(start, end):
+            self.matching_url_queue.put(self.record_list.popitem()[1])
 
         # block until all tasks are done
         self.matching_url_queue.join()
 
-        for i in range(threadCount):
+        for i in range(1):
             self.matching_url_queue.put(None)
 
         for t in self.threads:
@@ -123,7 +129,7 @@ class OpenExtractor:
                                 record_set[cleaned_url] = []
                                 record_set[cleaned_url].append(parsed)
                 print("[*] Added %d results." % len(records))
-        print("[*] Found a total of %d hits." % len(record_set), end="\r")
+        print("[*] Found a total of %d urls to crawl" % len(record_set), end=" | ")
         print("Already parsed %d urls" % len(self.parsed_urls))
         return record_set
 
@@ -135,6 +141,9 @@ class OpenExtractor:
     def download_page(record) -> Union[str, None]:
         offset, length = int(record['offset']), int(record['length'])
         offset_end = offset + length - 1
+
+        if length < 2000:
+            return None
 
         # We'll get the file via HTTPS so we don't need to worry about S3 credentials
         # Getting the file on S3 is equivalent however - you can request a Range
@@ -154,39 +163,46 @@ class OpenExtractor:
 
             response = ""
             # crude check for 301 errors and other data get errors
-            if len(data) > 2000:
-                try:
-                    warc, header, response = data.strip().split(b'\r\n\r\n', 2)
-                except Exception as err:
-                    return None
-                return response
-            else:
+            try:
+                warc, header, response = data.strip().split(b'\r\n\r\n', 2)
+            except Exception as err:
                 return None
+            return response
+
         except:
             return None
 
-    def findRecipe(self, urls: list) -> Union[Recipe, None]:
+    def findRecipe(self, urls: list) -> Union[Recipe]:
         retries = 0
         error_parsed = None
+        recipe = Recipe(None)
         for url in urls:
             if retries > self.max_retries:
                 break
             recipe = Recipe(None)
             html_data = self.download_page(url)
+
             if html_data is None:
+                recipe.set_error_status(ParseStatus.NO_DATA)
                 retries += 1
                 continue
             is_valid: ParseStatus = self.extract_recipe(html_data, recipe)
+            recipe.set_error_status(is_valid)
+
             self.connection_stats['parse_count'] += 1
+
             if is_valid == ParseStatus.SUCCESS:
                 recipe.set_url(url['url'])
-                recipe.set_error_status(is_valid)
                 return recipe
             else:
                 retries += 1
                 if is_valid == ParseStatus.PARSING_ERRORS:
                     error_parsed = recipe
-        return error_parsed
+            recipe = Recipe(None)
+        if error_parsed is not None:
+            return error_parsed
+        else:
+            return recipe
 
     def extract_recipe(self, html_content: str, recipe: Recipe) -> ParseStatus:
 

@@ -6,10 +6,9 @@ from typing import List, Union
 import re
 
 
-def crawl_my_recipes(threads: int, bulk_insert_amt: int):
-    all_recipe = OpenExtractor('https://www.myrecipes.com/recipe/*', 'myrecipes', bulk_insert_amt,
-                                 extract, check, url_check, url_remove)
-    all_recipe.run_crawl(threads)
+def crawl_my_recipes(bulk_insert_amt: int) -> OpenExtractor:
+    return OpenExtractor('https://www.myrecipes.com/recipe/*', 'myrecipes', bulk_insert_amt,
+                         extract, check, url_check, url_remove)
 
 
 def extract(parser: BeautifulSoup, recipe: Recipe) -> None:
