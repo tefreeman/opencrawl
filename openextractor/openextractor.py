@@ -22,6 +22,7 @@ class ParseStatus(IntEnum):
     NO_DATA = 1
     INVALID_PAGE = 2
     PARSING_ERRORS = 3
+    BAD_URL = 4
 
 
 class OpenExtractor:
@@ -71,11 +72,11 @@ class OpenExtractor:
                 self.matching_url_queue.task_done()
                 tries = 0
 
-            except:
+            except Exception as err:
                 self.matching_url_queue.task_done()
                 tries += 1
                 if tries == 3:
-                    print('\n\nthread has failed ', tries, ' in a row terminating thread\n')
+                    print('\nthread has failed ', tries, ' in a row terminating thread\n', err , "\n")
                     return
 
     def run_crawl(self, start=0, end=-1):
@@ -142,8 +143,12 @@ class OpenExtractor:
         offset, length = int(record['offset']), int(record['length'])
         offset_end = offset + length - 1
 
-        if length < 2000:
+        if length < 10000:
             return None
+
+        if 'status' in record:
+            if int(record['status']) > 300:
+                return None
 
         # We'll get the file via HTTPS so we don't need to worry about S3 credentials
         # Getting the file on S3 is equivalent however - you can request a Range
@@ -176,16 +181,18 @@ class OpenExtractor:
         retries = 0
         error_parsed = None
         recipe = Recipe(None)
+
         for url in urls:
             if retries > self.max_retries:
                 break
-            recipe = Recipe(None)
+
             html_data = self.download_page(url)
 
             if html_data is None:
-                recipe.set_error_status(ParseStatus.NO_DATA)
+                recipe.set_error_status(ParseStatus.BAD_URL)
                 retries += 1
                 continue
+
             is_valid: ParseStatus = self.extract_recipe(html_data, recipe)
             recipe.set_error_status(is_valid)
 
@@ -198,7 +205,7 @@ class OpenExtractor:
                 retries += 1
                 if is_valid == ParseStatus.PARSING_ERRORS:
                     error_parsed = recipe
-            recipe = Recipe(None)
+
         if error_parsed is not None:
             return error_parsed
         else:
@@ -219,6 +226,7 @@ class OpenExtractor:
             recipe.append_errs("Not recipe")
             recipe.append_parser(html_content)
             return ParseStatus.INVALID_PAGE
+
         self.extract_recipe_func(parser_body, recipe)
 
         if len(recipe.get_errs()) > 0:

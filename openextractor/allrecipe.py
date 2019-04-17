@@ -71,7 +71,7 @@ def url_remove(url:str) -> str:
 
 
 def url_check(url: str) -> bool:
-    if url.find('review') == -1 and url.find('?') == -1 and url.find('/articles/') == -1:
+    if url.find('review') == -1 and url.find('?') == -1 and url.find('/articles/') == -1 and url.find('.aspx') == -1:
         return True
     else:
         return False

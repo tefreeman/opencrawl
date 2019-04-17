@@ -28,7 +28,7 @@ class SaveRecipes:
         self.bulk_update_trigger_amt = trigger_amt
         self.stopped = False
         self.url_count = 0
-        self.type_error_count = [0, 0, 0, 0]
+        self.type_error_count = [0, 0, 0, 0, 0]
         self.event.set()
 
     def start(self):
@@ -36,7 +36,8 @@ class SaveRecipes:
         return self
 
     def set_url_count(self, url_count):
-        self.url_count = url_count
+        self.url_count = url_count + 1
+        self.update_count += 1
 
     def update(self):
         while True:
@@ -45,7 +46,7 @@ class SaveRecipes:
                     if self.update_count > 0:
                         print('\x1b[2K\r')
                     self.event.clear()
-                    print('PyMongo excuting Bulk Write')
+               #     print('PyMongo excuting Bulk Write')
                     self.collection.bulk_write(self.recipe_buffer, ordered=False)
                     self.recipe_buffer = list()
                     self.event.set()
@@ -65,10 +66,10 @@ class SaveRecipes:
                 return
             if self.update_count > 0:
                 stdout.write(" \r count: %d | progress: %f%% | err count %d | err rate: %f%% |"
-                             " err: no_data: %d, invalid_page: %d, parsing_errors: %d"
+                             " err: no_data: %d, invalid_page: %d, parsing_errors: %d, bad_urls: %d"
                              % (self.update_count, float(self.update_count) / float(self.url_count), self.error_count,
                                 float(self.error_count) / float(self.update_count), self.type_error_count[1],
-                                self.type_error_count[2], self.type_error_count[3]))
+                                self.type_error_count[2], self.type_error_count[3], self.type_error_count[4]))
                 stdout.flush()
             time.sleep(1)
 
@@ -76,14 +77,20 @@ class SaveRecipes:
     # NO_DATA = 1
     # INVALID_PAGE = 2
     # PARSING_ERRORS = 3
+    # BAD_URL = 4
     def append(self, recipe: Recipe):
         self.event.wait()
         self.update_count += 1
-        if recipe.error_status == 0:
-            self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
+        if recipe.error_status == 0 or recipe.error_status == 3:
+            pass
+        elif recipe.error_status == 4:
+            self.update_count -= 1
+            self.url_count -= 1
         else:
-            self.type_error_count[recipe.error_status] += 1
             self.error_count += 1
+
+        self.type_error_count[recipe.error_status] += 1
+        self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
 
     def alive(self):
         if len(self.recipe_buffer) < 1:

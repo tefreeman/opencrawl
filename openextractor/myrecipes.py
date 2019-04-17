@@ -72,7 +72,8 @@ def url_remove(url:str) -> str:
 
 
 def url_check(url: str) -> bool:
-    if url.find('?') == -1 and url.find('#') == -1:
+    if url.find('?') == -1 and url.find('#') == -1 and url.find('rating') == -1\
+            and url.find('review') == -1 and url.find('print') == -1:
         return True
     else:
         return False
