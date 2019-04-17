@@ -41,6 +41,7 @@ class OpenExtractor:
         self.record_list = self.find_urls_in_indexes(target_url, self.indexes)
         self.save_thread = SaveRecipes('recipes', collection_name, bulk_trigger_amt, len(self.record_list)).start()
         self.max_retries = 3
+        self.max_thread_fail = 3
 
         self.connection_stats = {'parse_count': 0.001, 'parse_time': 0.001}
 
@@ -58,13 +59,25 @@ class OpenExtractor:
         for doc in cursor:
             self.parsed_urls[doc['url']] = True
 
-    def start_worker(self):
+    def start_worker(self,):
+        tries = 0
         while True:
-            url = self.matching_url_queue.get()
-            if url is None:
-                break
-            self.save_thread.append(self.findRecipe(url))
-            self.matching_url_queue.task_done()
+            try:
+                url = self.matching_url_queue.get()
+                if url is None:
+                    break
+                self.save_thread.append(self.findRecipe(url))
+                self.matching_url_queue.task_done()
+                tries = 0
+
+            except:
+                self.matching_url_queue.task_done()
+                tries += 1
+                if tries == 3:
+                    print('\n\nthread has failed ', tries, ' in a row terminating thread\n')
+                    return
+
+
 
     def run_crawl(self, threadCount):
         for i in range(threadCount):

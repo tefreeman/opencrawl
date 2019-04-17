@@ -60,8 +60,8 @@ class SaveRecipes:
             if self.stopped:
                 return
 
-            stdout.write(" \r count: %d | progress: %d%% | error rate: %d%%"
-                         % (self.update_count, self.update_count / self.url_count, self.error_count / float(self.update_count + 0.0001)))
+            stdout.write(" \r count: %f | progress: %f%% | error rate: %f%%"
+                         % (self.update_count, float(self.update_count) / float(self.url_count), float(self.error_count) / float(self.update_count + 0.0001)))
             stdout.flush()
             time.sleep(1)
 
