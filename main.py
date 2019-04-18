@@ -23,6 +23,7 @@ if update_rate == "":
 else:
     update_rate = int(update_rate)
 open_crawler: openextractor
+
 if user_input == "0":
     open_crawler = crawl_food_network(update_rate)
 elif user_input == "1":

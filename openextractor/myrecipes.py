@@ -44,11 +44,11 @@ def extract(parser: BeautifulSoup, recipe: Recipe) -> None:
     else:
         recipe.append_errs('review_info')
 
-    nutrition_info = get_nutrition_info(parser)
-    if len(nutrition_info) > 0:
-        recipe.set_nutrition_info(nutrition_info)
-    else:
-        recipe.append_errs('nutrition_info')
+   # nutrition_info = get_nutrition_info(parser)
+   # if len(nutrition_info) > 0:
+    #     recipe.set_nutrition_info(nutrition_info)
+    # else:
+    #    recipe.append_errs('nutrition_info')
 
     if len(recipe.get_errs()) > 0:
         recipe.append_parser(parser)
