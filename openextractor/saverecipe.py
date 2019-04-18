@@ -57,10 +57,10 @@ class SaveRecipes:
                     pprint(bwe.code)
                     self.recipe_buffer = list()
                     self.event.set()
-                except:
+                except Exception as err:
                     # Failed to save product into db.
                     # TODO: Add err message
-                    print("[-] Upload Error")
+                    print("[-] Upload Error", err)
                     self.stopped = True
             #    time.sleep(1)
             if self.stopped:
@@ -82,16 +82,16 @@ class SaveRecipes:
     def append(self, recipe: Recipe):
         self.event.wait()
         self.update_count += 1
-        if recipe.error_status == 0 or recipe.error_status == 3:
-            pass
-        elif recipe.error_status == 4:
-            self.update_count -= 1
-            self.url_count -= 1
-        else:
-            self.error_count += 1
-
-        self.type_error_count[recipe.error_status] += 1
-        self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
+        if recipe is not None:
+            if recipe.error_status == 0 or recipe.error_status == 3:
+                pass
+            elif recipe.error_status == 4:
+                self.update_count -= 1
+                self.url_count -= 1
+            else:
+                self.error_count += 1
+            self.type_error_count[recipe.error_status] += 1
+            self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
 
     def alive(self):
         if len(self.recipe_buffer) < 1:
