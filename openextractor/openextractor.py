@@ -193,6 +193,7 @@ class OpenExtractor:
                 retries += 1
                 continue
 
+
             is_valid: ParseStatus = self.extract_recipe(html_data, recipe)
             recipe.set_error_status(is_valid)
 
