@@ -149,9 +149,12 @@ def get_nutrition_info(parser: BeautifulSoup) -> dict:
     if nutri_selector is not None:
         nutri_elements: List[Tag] = nutri_selector.select('li')
         for ele in nutri_elements:
-            name, val = ele.text.strip().split(' ', 2)
-            if name is not None and val is not None:
-                nutrition_dict[name] = val
+            try:
+                name, val = ele.text.strip().split(' ', 2)
+                if name is not None and val is not None:
+                    nutrition_dict[name] = val
+            except:
+                pass
     return nutrition_dict
 
 

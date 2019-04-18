@@ -181,6 +181,7 @@ class OpenExtractor:
         retries = 0
         error_parsed = None
         recipe = Recipe(None)
+
         for url in urls:
             recipe.set_url(url['url'])
             if retries > self.max_retries:
@@ -192,7 +193,6 @@ class OpenExtractor:
                 recipe.set_error_status(ParseStatus.BAD_URL)
                 retries += 1
                 continue
-
 
             is_valid: ParseStatus = self.extract_recipe(html_data, recipe)
             recipe.set_error_status(is_valid)
