@@ -84,6 +84,7 @@ class SaveRecipes:
         self.event.wait()
         self.update_count += 1
         if recipe is not None:
+            self.check_for_periods(recipe)
             if recipe.error_status == 0 or recipe.error_status == 3:
                 pass
             elif recipe.error_status == 4:
@@ -93,6 +94,17 @@ class SaveRecipes:
                 self.error_count += 1
             self.type_error_count[recipe.error_status] += 1
             self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
+
+    def check_for_periods(self, recipe):
+        for key, value in recipe.nutrition_info.items():
+            if value.find('.') != -1:
+                value = value.replace('.', '')
+                if key.find('.') != -1:
+                    del recipe.nutrition_info[key]
+                    key = key.replace('.', '')
+                    recipe.nutrition_info[key] = value
+                else:
+                    recipe.nutrition_info[key] = value
 
     def alive(self):
         if len(self.recipe_buffer) < 1:
