@@ -9,6 +9,7 @@ class Recipe:
             self.name = recipe.name
             self.ingredients = recipe.ingredients
             self.directions = recipe.directions
+            self.description = recipe.description
             self.review_count = recipe.review_count
             self.review_score = recipe.review_score
             self.info = recipe.info
@@ -21,6 +22,7 @@ class Recipe:
             self.name: str = ""
             self.ingredients: List[str] = []
             self. directions: List[str] = []
+            self.description = ""
             self.review_score: int = -1
             self.review_count: int = -1
             self.info: dict = {}
@@ -54,6 +56,9 @@ class Recipe:
 
     def set_reviewScore(self, review_score):
         self.review_score = review_score
+
+    def set_description(self, description):
+        self.description = description
 
     def set_info(self, info):
         self.info = info
@@ -93,6 +98,7 @@ class Recipe:
             'review_score': self.review_score,
             'info': self.info,
             'directions': self.directions,
+            'description': self.description,
             'ingredients': self.ingredients,
             'errs': self.errs,
             'error_status': self.error_status
