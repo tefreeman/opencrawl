@@ -45,9 +45,10 @@ def check(page: BeautifulSoup) -> bool:
         return False
     ingredient: Tag  = page.select_one('div.ingredients')
     direction: Tag = page.select_one('div.directions')
-    ingredients: List[Tag] = page.find_all(class_="recipe-ingredients-item")
     if ingredient is not None or direction is not None:
             return True
+    elif page.find(text='Ingredients') or page.find(text='Directions'):
+        return True
     return False
 
 
@@ -80,6 +81,8 @@ def decompose_script_tags(parser: BeautifulSoup) -> BeautifulSoup:
 
 def get_ingredients(parser: BeautifulSoup) -> list:
     ingredient_tags: List[Tag] = parser.select('div.ingredient-item')
+    if len(ingredient_tags) == 0:
+        ingredient_tags = parser.select('li.recipe-ingredients-item')
     r_elements = []
     for element in ingredient_tags:
         r_text = ""
@@ -96,6 +99,8 @@ def get_ingredients(parser: BeautifulSoup) -> list:
 def get_directions(parser: BeautifulSoup):
     r_elements = []
     parent_element: Tag = parser.select_one('div.direction-lists')
+    if parent_element is None:
+        parent_element = parser.select_one('section.recipe-directions')
     if parent_element is None:
         return r_elements
     elements = parent_element.select('li')
@@ -115,15 +120,31 @@ def get_time_info(parser: BeautifulSoup) -> dict:
     r_dict: dict = {}
     prep_parent: Tag = parser.select_one('div.recipe-details-container')
     if prep_parent is None:
+        prep_parent = parser.select_one('section.recipe-info')
+    if prep_parent is None:
         return r_dict
     yield_ele = prep_parent.select_one('span.yields-amount')
+    if yield_ele is None:
+        yield_ele: Tag = prep_parent.find('div', itemprop='recipeYield')
     if yield_ele is not None:
         r_dict['yield'] =  re.sub(r'([\t\n\s])+', ' ', yield_ele.text.strip())
+
     prep_time_ele = prep_parent.select_one('span.prep-time-amount')
+    if prep_time_ele is None:
+        prep_time_ele = prep_parent.find('time', itemprop='prepTime')
     if prep_time_ele is not None:
         r_dict['prep'] =  re.sub(r'([\t\n\s])+', ' ', prep_time_ele.text.strip())
+
     prep_total_time = prep_parent.select_one('span.total-time-amount')
+    if prep_total_time is None:
+        prep_total_time = prep_parent.find('time', itemprop='totalTime')
     if prep_total_time is not None:
         r_dict['total'] =  re.sub(r'([\t\n\s])+', ' ', prep_total_time.text.strip())
 
+
+    level_ele = prep_parent.select_one('div.recipe-info-item.recipe-info-difficulty')
+    if level_ele is not None:
+        r_dict['level'] = re.sub(r'([\t\n\s])+', ' ', level_ele.text.strip())
+
     return r_dict
+
