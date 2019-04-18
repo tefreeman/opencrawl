@@ -53,6 +53,7 @@ class SaveRecipes:
                     self.event.set()
                 except BulkWriteError as bwe:
                     # TODO: Add validation
+
                     print('PyMongo BulkWriteError')
                     pprint(bwe.code)
                     self.recipe_buffer = list()
