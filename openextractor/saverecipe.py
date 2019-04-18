@@ -96,15 +96,27 @@ class SaveRecipes:
             self.recipe_buffer.append(pymongo.InsertOne(recipe.to_json()))
 
     def check_for_periods(self, recipe):
-        for key, value in recipe.nutrition_info.items():
-            if value.find('.') != -1:
-                value = value.replace('.', '')
-                if key.find('.') != -1:
-                    del recipe.nutrition_info[key]
-                    key = key.replace('.', '')
-                    recipe.nutrition_info[key] = value
-                else:
-                    recipe.nutrition_info[key] = value
+        try:
+            for key, value in recipe.nutrition_info.items():
+                if value.find('.') != -1:
+                    value = value.replace('.', '')
+                    if key.find('.') != -1:
+                        del recipe.nutrition_info[key]
+                        key = key.replace('.', '')
+                        recipe.nutrition_info[key] = value
+                    else:
+                        recipe.nutrition_info[key] = value
+            for key, value in recipe.info.items():
+                    if value.find('.') != -1:
+                        value = value.replace('.', '')
+                        if key.find('.') != -1:
+                            del recipe.nutrition_info[key]
+                            key = key.replace('.', '')
+                            recipe.nutrition_info[key] = value
+                        else:
+                            recipe.nutrition_info[key] = value
+        except:
+            pass
 
     def alive(self):
         if len(self.recipe_buffer) < 1:
