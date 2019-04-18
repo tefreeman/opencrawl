@@ -1,11 +1,12 @@
-import threading
 import pymongo
-from pymongo.errors import BulkWriteError
+import threading
 import time
 from pprint import pprint
-from recipe import Recipe
+from pymongo.errors import BulkWriteError
 from sys import stdout
 from typing import List
+
+from recipe import Recipe
 
 
 class SaveRecipes:

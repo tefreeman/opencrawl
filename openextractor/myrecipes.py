@@ -108,10 +108,12 @@ def get_directions(parser: BeautifulSoup):
     elements: List[Tag] = parser.select('div.step')
     r_elements = []
     for element in elements:
-        p_element = element.p
-        if p_element is not None:
-            if p_element.text.strip() != "":
-                r_elements.append(p_element.text.strip())
+        p_elements = element.select('p')
+        for p_element in p_elements:
+            if p_element is not None:
+                if p_element.text.strip() != "":
+                    r_elements.append(p_element.text.strip())
+                    break
     return r_elements
 
 
