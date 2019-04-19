@@ -177,13 +177,15 @@ def get_time_info(parser: BeautifulSoup) -> dict:
     if yield_ele is None:
         yield_ele = parser.find(itemprop='recipeyield')
     if yield_ele is None:
+        yield_ele = parser.select_one('span.rec-Servings')
+    if yield_ele is None:
         pass
     else:
          r_dict['yield'] =  yield_ele.text.strip()
 
     total_time_ele = parser.select_one('div.recipe-time-yield__label-prep')
     if total_time_ele is None:
-        total_time_ele = parser.select_one('div.rec-CTime')
+        total_time_ele = parser.find(class_='rec-CTime')
     if total_time_ele is None:
         pass
     else:
