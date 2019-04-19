@@ -123,12 +123,16 @@ def get_review_stats(parser: BeautifulSoup):
         pass
     return r_dict
 
+
 def get_directions(parser: BeautifulSoup):
     r_elements = []
     parent_elements: List[Tag] = parser.select('li.recipe-directions__item')
     if len(parent_elements) == 0:
         container = parser.select_one('dl.numbered-list')
-        parent_elements = container.select('span.rd_name')
+        if container is not None:
+            parent_elements = container.select('span.rd_name')
+        else:
+            parent_elements = parser.find_all(class_='rd_name')
     for parent_element in parent_elements:
         if parent_element is None:
             continue
