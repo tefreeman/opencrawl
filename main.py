@@ -27,21 +27,26 @@ else:
     update_rate = int(update_rate)
 open_crawler: openextractor
 
+print('would you like to clear previous urls with parsing errors? (enter for no | 1 for yes)')
+clear_url_input = input(': ')
+clear = False
+
+if clear_url_input == "1":
+    clear = True
 if user_input == "0":
-    open_crawler = crawl_food_network(update_rate)
+    open_crawler = crawl_food_network(update_rate, clear)
 elif user_input == "1":
-    open_crawler = crawl_all_recipe(update_rate)
+    open_crawler = crawl_all_recipe(update_rate, clear)
 elif user_input == "2":
-    open_crawler = crawl_my_recipes(update_rate)
+    open_crawler = crawl_my_recipes(update_rate, clear)
 elif user_input == "3":
-    open_crawler = crawl_delish(update_rate)
+    open_crawler = crawl_delish(update_rate, clear)
 elif user_input == "4":
-    open_crawler = crawl_epicurious(update_rate)
+    open_crawler = crawl_epicurious(update_rate, clear)
 elif user_input == "5":
-    open_crawler = crawl_taste_of_home(update_rate)
+    open_crawler = crawl_taste_of_home(update_rate, clear)
 else:
     raise Exception('improper user input of, ', user_input)
-
 
 print("enter subset of urls to target using this format x:x  (start:end) or enter nothing for default (all)")
 user_subset = input('(x:x:): ')

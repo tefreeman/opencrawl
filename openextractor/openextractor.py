@@ -29,7 +29,7 @@ class OpenExtractor:
     common_crawl_indexes_url = 'https://index.commoncrawl.org/collinfo.json'
 
     def __init__(self, target_url: str, collection_name: str, bulk_trigger_amt: int, extract_func: Callable[[BeautifulSoup, Recipe], None],
-                 check_func: Callable[[str], bool], url_check: Callable[[BeautifulSoup], bool], url_remove: Callable[[str], str]):
+                 check_func: Callable[[str], bool], url_check: Callable[[BeautifulSoup], bool], url_remove: Callable[[str], str], should_clear: bool):
         self.extract_recipe_func: Callable[[any, any], None] = extract_func
         self.check_page_func: Callable[[any], bool] = check_func
         self.url_check_func: Callable[[BeautifulSoup], bool] = url_check
@@ -38,7 +38,7 @@ class OpenExtractor:
         self.threads: List[threading.Thread] = []
         self.domain_urls: Dict = {}
         self.parsed_urls = {}
-        self.load_url_map('recipes', collection_name)
+        self.load_url_map('recipes', collection_name, should_clear)
         self.indexes: List[str] = self.get_open_crawl_index_list()
         self.record_list = self.find_urls_in_indexes(target_url, self.indexes)
         self.save_thread = SaveRecipes('recipes', collection_name, bulk_trigger_amt).start()
@@ -47,7 +47,7 @@ class OpenExtractor:
 
         self.connection_stats = {'parse_count': 0.001, 'parse_time': 0.001}
 
-    def load_url_map(self, db_name: str, collection_name: str):
+    def load_url_map(self, db_name: str, collection_name: str, should_clear: bool):
         client = pymongo.MongoClient("mongodb://localhost:27017/")
         db_list = client.list_database_names()
 
@@ -56,6 +56,13 @@ class OpenExtractor:
 
         db = client[db_name]
         collection = db[collection_name]
+
+        if should_clear is True:
+            result_parse_3 = collection.delete_many({'error_status': 3})
+            result_bad_status = collection.delete_many({'error_status': ""})
+            result_url = collection.delete_many({'url': ""})
+            print('deleted ',result_parse_3.deleted_count + result_bad_status.deleted_count + result_url.deleted_count,
+                  ' urls with parsing or bad formatting (status = "" | url = "")\n')
 
         cursor = collection.find({})
         for doc in cursor:

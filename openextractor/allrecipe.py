@@ -6,9 +6,9 @@ from typing import List, Union
 import re
 
 
-def crawl_all_recipe(bulk_insert_amt: int) -> OpenExtractor:
+def crawl_all_recipe(bulk_insert_amt: int, clear=False) -> OpenExtractor:
     return OpenExtractor('https://www.allrecipes.com/recipe/*', 'allrecipes', bulk_insert_amt,
-                         extract, check, url_check, url_remove)
+                         extract, check, url_check, url_remove, clear)
 
 
 def extract(parser: BeautifulSoup, recipe: Recipe) -> None:
