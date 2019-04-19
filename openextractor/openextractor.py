@@ -8,7 +8,7 @@ import lxml
 from bs4 import BeautifulSoup, Tag
 from typing import Dict, Union, List, Callable
 from recipe import Recipe
-from helpers import cache_request, if_errs_save_file, get_highest_match
+from helpers import cache_request, if_errs_save_file, get_highest_match, delete_duplicates_by_key
 from saverecipe import SaveRecipes
 from collections import OrderedDict
 from enum import IntEnum
@@ -61,7 +61,8 @@ class OpenExtractor:
             result_parse_3 = collection.delete_many({'error_status': 3})
             result_bad_status = collection.delete_many({'error_status': ""})
             result_url = collection.delete_many({'url': ""})
-            print('deleted ',result_parse_3.deleted_count + result_bad_status.deleted_count + result_url.deleted_count,
+            count = delete_duplicates_by_key(collection, 'url')
+            print('deleted ',result_parse_3.deleted_count + result_bad_status.deleted_count + result_url.deleted_count+ count,
                   ' urls with parsing or bad formatting (status = "" | url = "")\n')
 
         cursor = collection.find({})

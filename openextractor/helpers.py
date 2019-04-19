@@ -1,6 +1,26 @@
 from os import path, mkdir
 from requests import get
 from typing import List, TypeVar, Tuple
+import pymongo
+
+
+def delete_duplicates_by_key(collection: pymongo.collection, key_str: str) -> int:
+    docs: dict = {}
+    cursor = collection.find({})
+    bulk_ops: List[str] = []
+    for doc in cursor:
+        if doc['url'] not in docs:
+            docs[doc['url']] = []
+        docs[doc['url']].append(doc)
+
+    for key, val in docs.items():
+        if len(val) > 1:
+            for i in range(1, len(val)):
+                bulk_ops.append(val[i]['_id'])
+    if len(bulk_ops) > 0:
+        collection.remove({'_id': {'$in': bulk_ops}})
+    return len(bulk_ops)
+
 
 def transformUrlToFileName(url: str):
     if url.find('https://') is not -1:
