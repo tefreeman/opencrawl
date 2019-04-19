@@ -79,6 +79,7 @@ class OpenExtractor:
                     print('\nthread has failed ', tries, ' in a row terminating thread\n', err , "\n")
                     return
 
+
     def run_crawl(self, start=0, end=-1):
         if start < 0 or end > len(self.record_list) or start > len(self.record_list):
             raise Exception("start and end is not valid")
