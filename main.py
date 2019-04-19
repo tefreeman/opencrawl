@@ -4,6 +4,8 @@ from myrecipes import crawl_my_recipes
 from openextractor import openextractor
 from delish import crawl_delish
 from epicurious import crawl_epicurious
+from tasteofhome import crawl_taste_of_home
+
 # https://www.blueapron.com/recipes/vadouvan-tilapia-roasted-vegetables-with-yogurt
 # www.eatingwell.com/recipes/17963/mealtimes/lunch/
 # https://www.epicurious.com/recipes/food/views/steak-stroganoff
@@ -14,6 +16,7 @@ print("1  | allrecipes.com crawl")
 print("2  | myrecipes.com crawl")
 print("3  | delish.com crawl")
 print("4 | epicurious.com crawl")
+print("5 | tasteofhome.com crawl")
 
 user_input = input("input: ")
 
@@ -34,6 +37,8 @@ elif user_input == "3":
     open_crawler = crawl_delish(update_rate)
 elif user_input == "4":
     open_crawler = crawl_epicurious(update_rate)
+elif user_input == "5":
+    open_crawler = crawl_taste_of_home(update_rate)
 else:
     raise Exception('improper user input of, ', user_input)
 

@@ -5,9 +5,8 @@ from openextractor.recipe import Recipe
 from typing import List, Union
 import re
 
-
-def crawl_epicurious(bulk_insert_amt: int) -> OpenExtractor:
-    return OpenExtractor('https://www.epicurious.com/recipes/food/views/*', 'epicurious', bulk_insert_amt,
+def crawl_taste_of_home(bulk_insert_amt: int) -> OpenExtractor:
+    return OpenExtractor('https://www.tasteofhome.com/recipes/*', 'tasteofhome', bulk_insert_amt,
                          extract, check, url_check, url_remove)
 
 
@@ -36,19 +35,20 @@ def extract(parser: BeautifulSoup, recipe: Recipe) -> None:
         recipe.set_info(time_info)
     else:
         recipe.append_errs('time_info')
-
+    '''
     description = get_description(parser)
     if description is not None:
         recipe.set_description(description)
     else:
-        pass
-
+        recipe.append_errs('description')
+    '''
+    '''
     nutrition = get_nutrition_info(parser)
     if len(nutrition) > 0:
         recipe.set_nutrition_info(nutrition)
     else:
-       pass
-
+        recipe.append_errs('nutrition')
+    '''
     review_stats = get_review_stats(parser)
     if len(review_stats) > 0:
         if 'rating' in review_stats:
@@ -86,28 +86,34 @@ def url_check(url: str) -> bool:
         return False
 
 def get_ingredients(parser: BeautifulSoup) -> list:
-    ingredient_tags: List[Tag] = parser.select('li.ingredient')
-    if len(ingredient_tags) == 0:
-       ingredient_tags = parser.find_all(itemprop='ingredients')
-    r_elements = []
-    for element in ingredient_tags:
-        if element.text.strip() != "":
-            r_elements.append(element.text.strip())
-    return r_elements
+    try:
+        r_elements = []
+        parent_tag: Tag = parser.select_one('div.recipe-ingredients')
+        if parent_tag is None:
+            parent_tag = parser.select_one('ul.rd_ingredients')
+        ingredient_tags: List[Tag] = parent_tag.select('li')
+        for element in ingredient_tags:
+            if element.text.strip() != "":
+                r_elements.append(element.text.strip())
+        return r_elements
+    except:
+        return []
 
 def get_review_stats(parser: BeautifulSoup):
     r_dict =  {}
 
-    parent_ele = parser.select_one('recipe-sidebar')
+    parent_ele = parser.select_one('div.recipe-meta')
     if parent_ele is None:
         parent_ele = parser
 
-    rating = parent_ele.find(itemprop='ratingValue')
-    review_count = parent_ele.find(itemprop='reviewCount')
+    rating = 0
+    rating_stars_full = parent_ele.select('i.dashicons.dashicons-star-filled')
+    rating_stars_half = parent_ele.select('i.dashicons.dashicons-star-half')
+    review_count = parent_ele.select_one('a.recipe-comments-scroll')
 
     try:
-        if rating is not None:
-            r_dict['rating'] = rating['content'].strip()
+        rating += len(rating_stars_full) + (len(rating_stars_half) * 0.5)
+        r_dict['rating'] = rating
     except:
         pass
     try:
@@ -119,18 +125,16 @@ def get_review_stats(parser: BeautifulSoup):
 
 def get_directions(parser: BeautifulSoup):
     r_elements = []
-    parent_elements: List[Tag] = parser.select('ol.preparation-steps')
-   # if parent_element is None:
-   #     parent_element = parser.select_one('section.recipe-directions')
+    parent_elements: List[Tag] = parser.select('li.recipe-directions__item')
     if len(parent_elements) == 0:
-        return r_elements
+        container = parser.select_one('dl.numbered-list')
+        parent_elements = container.select('span.rd_name')
     for parent_element in parent_elements:
         if parent_element is None:
             continue
-        elements = parent_element.select('li')
-        for element in elements:
-            if element.text.strip() != "":
-                r_elements.append(element.text.strip())
+        text = parent_element.get_text().strip()
+        if text != "":
+            r_elements.append(text)
     return r_elements
 
 
@@ -157,7 +161,7 @@ def get_nutrition_info(parser: BeautifulSoup) -> dict:
                 name = ele.select_one('span.nutri-label').text.strip()
                 val = ele.select_one('span.nutri-data').text.strip()
                 if name is not None and val is not None:
-                    nutrition_dict[name.replace('.', '')] = val
+                    nutrition_dict[name] = val
             except:
                 pass
     return nutrition_dict
@@ -165,22 +169,20 @@ def get_nutrition_info(parser: BeautifulSoup) -> dict:
 
 def get_time_info(parser: BeautifulSoup) -> dict:
     r_dict = {}
-    yield_ele = parser.find(itemprop='recipeYield')
+    yield_ele = parser.select_one('div.recipe-time-yield__label-servings')
+    if yield_ele is None:
+        yield_ele = parser.find(itemprop='recipeyield')
     if yield_ele is None:
         pass
     else:
          r_dict['yield'] =  yield_ele.text.strip()
 
-    total_time_ele = parser.select_one('dd.total-time')
+    total_time_ele = parser.select_one('div.recipe-time-yield__label-prep')
+    if total_time_ele is None:
+        total_time_ele = parser.select_one('div.rec-CTime')
     if total_time_ele is None:
         pass
     else:
         r_dict['total'] = total_time_ele.text.strip()
-
-    active_time_ele = parser.select_one('dd.active-time')
-    if active_time_ele is None:
-        pass
-    else:
-        r_dict['active'] = active_time_ele.text.strip()
 
     return r_dict

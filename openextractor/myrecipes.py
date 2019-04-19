@@ -150,9 +150,10 @@ def get_nutrition_info(parser: BeautifulSoup) -> dict:
         nutri_elements: List[Tag] = nutri_selector.select('li')
         for ele in nutri_elements:
             try:
+                test: str
                 name, val = ele.text.strip().split(' ', 2)
                 if name is not None and val is not None:
-                    nutrition_dict[name] = val
+                    nutrition_dict[name.replace('.', '')] = val
             except:
                 pass
     return nutrition_dict
@@ -172,5 +173,5 @@ def get_time_info(parser: BeautifulSoup) -> dict:
         value = prep.select_one('div.recipe-meta-item-body')
         if header is not None and value is not None:
             if header.text.strip() != "" and value.text.strip() != "":
-               r_dict[header.text.strip()] = value.text.strip()
+                r_dict[header.text.strip().replace('.', '')] = value.text.strip()
     return r_dict
