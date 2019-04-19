@@ -59,7 +59,7 @@ class OpenExtractor:
 
         cursor = collection.find({})
         for doc in cursor:
-            self.parsed_urls[doc['url']] = True
+            self.parsed_urls[self.url_remove_func(doc['url'])] = True
 
     def start_worker(self):
         tries = 0
